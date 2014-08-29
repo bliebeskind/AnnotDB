@@ -47,6 +47,16 @@ def get_orfs_from_file(infile, min_length=0):
 			continue
 		yield rec, orf
 		
+def return_previous(seq_list,orf_list,splices=False):
+	'''Handle dumping of orfs in find_canonicals'''
+	if not splices: 	# if no splice variants
+		assert len(seq_list) == 1
+		yield seq_list[0], orf_list[0], True, 1 # rec, orf, is_longest, num_var
+	else:
+		longest = reduce(lambda x,y: x if len(x)>= len(y) else y, orf_list).id
+		for i,j in enumerate(orf_list):
+			yield seq_list[i], j, j.id == longest, len(orf_list)
+		
 def find_canonicals(infile,min_length=0):
 	'''
 	Parse trinity output file and return generator that yields four-part tuples:
@@ -68,15 +78,15 @@ def find_canonicals(infile,min_length=0):
 		elif comp in orf_D:	# is a variant of previous sequence
 			orf_D[comp].append(orf)
 			seq_D[comp].append(rec)
-		elif comp not in orf_D and orf_D!= {}: # new gene
-			assert len(orf_D) == 1 and len(seq_D) == 1
+		elif comp not in orf_D and orf_D != {}: # new gene, yield previous
+			assert len(orf_D) == 1 and len(seq_D) == 1 #should have just one key
 			assert comp not in comp_list, "Comps not contiguous"
-			orf_list = orf_D[orf_D.keys()[0]]
 			seq_list = seq_D[seq_D.keys()[0]]
+			orf_list = orf_D[orf_D.keys()[0]]
 			if len(orf_list) == 1: 	# if no splice variants
 				assert len(seq_list) == 1
 				yield seq_list[0], orf_list[0], True, 1 # rec, orf, is_longest, num_var
-			else:
+			else: # yield all, with info on whether it's longest
 				longest = reduce(lambda x,y: x if len(x)>= len(y) else y, orf_list).id
 				for i,j in enumerate(orf_list):
 					yield seq_list[i], j, j.id == longest, len(orf_list)
@@ -86,6 +96,15 @@ def find_canonicals(infile,min_length=0):
 		else:
 			raise
 		comp_list.append(comp)
+	seq_list = seq_D[seq_D.keys()[0]] # repeats line 84-92 above, but oh well.
+	orf_list = orf_D[orf_D.keys()[0]]
+	if len(orf_list) == 1: 	
+		assert len(seq_list) == 1
+		yield seq_list[0], orf_list[0], True, 1 # rec, orf, is_longest, num_var
+	else: # yield all, with info on whether it's longest
+		longest = reduce(lambda x,y: x if len(x)>= len(y) else y, orf_list).id
+		for i,j in enumerate(orf_list):
+			yield seq_list[i], j, j.id == longest, len(orf_list)
 			
 def parse_trinity(infile,min_length=0):
 	'''

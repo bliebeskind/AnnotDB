@@ -7,6 +7,7 @@ from Bio.SeqRecord import SeqRecord
 from itertools import izip_longest
 import pickle
 from trinity_parser import parse_trinity
+from uniprot_blast_parser import tsv_line_gen
 	
 db = SqliteDatabase(None,threadlocals=True)
 
@@ -121,7 +122,10 @@ class TrinityDB:
 		''''''
 		Uniprot.create_table()
 		with db.transaction():
-			for data_dict in self._parse_uniprot(infile):
+			fields = ["name","uniprot_id","title"]
+			for row in tsv_line_gen(infile):
+				row = row.strip().split("\t")
+				data_dict = dict(izip_longest(fields,line))
 				trascript_name = Trinity.get(Trinity.name == str(data_dict['name']))
 				Uniprot.create(name=transcript_name,
 					uniprot_id=data_dict['uniprot_id'],
