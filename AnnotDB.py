@@ -44,8 +44,8 @@ class Uniprot(SqliteModel):
 	title: 		CharField
 	'''
 	name = ForeignKeyField(Trinity,related_name='uniprot_annot') # connect to Trinity
-	uniprot_id = CharField(default=None)
-	title = CharField(default=None)
+	uniprot_id = CharField(default=None,null=True)
+	title = CharField(default=None,null=True)
 
 class TrinityDB:
 	
@@ -109,24 +109,16 @@ class TrinityDB:
 		frame; and "prot" for translated ORFs.'''
 		SeqIO.write(self.get_canonicals(kind),outfile,format)
 		
-		
-	def _parse_uniprot(self,infile):
-		with open(infile) as f:
-			line = f.readline().strip().split("\t")
-			fields = ["name","uniprot_id","title"]
-			for line in f:                                      
-				line = line.strip().split("\t")
-				yield dict(izip_longest(fields,line))
 
 	def load_uniprot(self,infile):
-		''''''
+		'''Load top hits from .xml blast of Uniprot database.'''
 		Uniprot.create_table()
 		with db.transaction():
 			fields = ["name","uniprot_id","title"]
 			for row in tsv_line_gen(infile):
 				row = row.strip().split("\t")
-				data_dict = dict(izip_longest(fields,line))
+				data_dict = dict(izip_longest(fields,row))
 				trascript_name = Trinity.get(Trinity.name == str(data_dict['name']))
-				Uniprot.create(name=transcript_name,
+				Uniprot.create(name=data_dict['name'],
 					uniprot_id=data_dict['uniprot_id'],
 					title=data_dict['title'])
