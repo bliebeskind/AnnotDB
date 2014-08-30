@@ -40,7 +40,20 @@ def scan_generator(hmmscan_table):
 			scan = {}
 			scan[query] = [hit_D]
 	yield scan
-			
+	
+def byline_scan_generator(hmmscan_table):
+	'''
+	Yield dictionaries corresponding to one query at a time. Format is
+	the query as key mapped to a list of dictionaries corresponding to the 
+	field values:
+	
+	{query: name, target_name: hmm1, accession: PF0001, evalue: 0}
+	'''
+	fields = ["target","accession","name","evalue","expected_domains","description"]
+	for line in main_generator(hmmscan_table):
+		values = [line[0],line[1],line[2],float(line[4]),float(line[10]),line[-1]]
+		yield dict(zip(fields,values))
+
 def matches(hmmscan_table,domain,thresh):
 	'''Generator function. Returns stream of query names that hit <domain>
 	with an evalue below <thresh>'''

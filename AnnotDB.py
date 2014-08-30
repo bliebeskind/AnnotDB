@@ -8,6 +8,7 @@ from itertools import izip_longest
 import pickle
 from trinity_parser import parse_trinity
 from uniprot_blast_parser import tsv_line_gen
+from parse_hmmscan import byline_scan_generator
 	
 db = SqliteDatabase(None,threadlocals=True)
 
@@ -39,13 +40,31 @@ class Trinity(SqliteModel):
 class Uniprot(SqliteModel):
 	'''
 	Model of simple Uniprot annotation. Includes three fields (columns):
-	transcript: CharField
-	uniprot_id: CharField
-	title: 		CharField
+		name: ForeignKeyField
+		uniprot_id: CharField
+		title: 		CharField
 	'''
-	name = ForeignKeyField(Trinity,related_name='uniprot_annot') # connect to Trinity
+	name = ForeignKeyField(Trinity,related_name='uniprot_annotation') # connect to Trinity
 	uniprot_id = CharField(default=None,null=True)
 	title = CharField(default=None,null=True)
+	# Add evalue
+	
+class PFAM(SqliteModel):
+	'''
+	Model for PFAM annotation using hmmscan. Six fields:
+			name = ForeignKeyField
+			accession = Charfield
+			description = Charfield
+			evalue = FloatField
+			expected_domains = FloatField
+			target = Charfield
+	'''
+	name = ForeignKeyField(Trinity,related_name='pfam_annotations') # connect to Trinity
+	accession = Charfield(default=None,null=True)
+	description = Charfield(default=None,null=True)
+	evalue = FloatField(default=None,null=True)
+	expected_domains = FloatField(default=None,null=True)
+	target = Charfield(default=None,null=True)
 
 class TrinityDB:
 	
@@ -118,7 +137,19 @@ class TrinityDB:
 			for row in tsv_line_gen(infile):
 				row = row.strip().split("\t")
 				data_dict = dict(izip_longest(fields,row))
-				trascript_name = Trinity.get(Trinity.name == str(data_dict['name']))
-				Uniprot.create(name=data_dict['name'],
+				transcript_name = Trinity.get(Trinity.name == str(data_dict['name']))
+				Uniprot.create(name=transcript_name,
 					uniprot_id=data_dict['uniprot_id'],
 					title=data_dict['title'])
+				
+	def load_pfam(self,infile):
+		'''Load PFAM table from hmmscan table (must use --tblout option).'''
+		PFAM.create_table()
+		with db.transaction():
+			for row in byline_scan_generator(infile):
+				transcript_name = Trinity.get(Trinity.name == str(row['name']))
+				PFAM.create(name=transcript_name,
+					description=row['description'],
+					evalue=row['evalue'],
+					expected_domains=row['expected_domains'],
+					target=row['target'])
