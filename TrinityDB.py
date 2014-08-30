@@ -40,24 +40,24 @@ class Trinity(SqliteModel):
 class Uniprot(SqliteModel):
 	'''
 	Model of simple Uniprot annotation. Includes three fields (columns):
-		name: ForeignKeyField
-		uniprot_id: CharField
-		title: 		CharField
+	name: ForeignKeyField
+	uniprot_id: CharField
+	title: 		CharField
 	'''
 	name = ForeignKeyField(Trinity,related_name='uniprot_annotation') # connect to Trinity
 	uniprot_id = CharField(default=None,null=True)
 	title = CharField(default=None,null=True)
-	# Add evalue
+	### Add evalue ###
 	
 class PFAM(SqliteModel):
 	'''
 	Model for PFAM annotation using hmmscan. Six fields:
-			name = ForeignKeyField
-			accession = Charfield
-			description = Charfield
-			evalue = FloatField
-			expected_domains = FloatField
-			target = Charfield
+	name = ForeignKeyField
+	accession = Charfield
+	description = Charfield
+	evalue = FloatField
+	expected_domains = FloatField
+	target = Charfield
 	'''
 	name = ForeignKeyField(Trinity,related_name='pfam_annotations') # connect to Trinity
 	accession = CharField(default=None,null=True)
@@ -67,6 +67,11 @@ class PFAM(SqliteModel):
 	target = CharField(default=None,null=True)
 
 class TrinityDB:
+	
+	'''
+	Class for loading a database with output from a Trinity assembly and
+	annotations from Uniprot using Blastp and PFAM using hmmscan.
+	'''
 	
 	def __init__(self,db_name):
 		db.init(db_name)
