@@ -60,11 +60,11 @@ class PFAM(SqliteModel):
 			target = Charfield
 	'''
 	name = ForeignKeyField(Trinity,related_name='pfam_annotations') # connect to Trinity
-	accession = Charfield(default=None,null=True)
-	description = Charfield(default=None,null=True)
+	accession = CharField(default=None,null=True)
+	description = CharField(default=None,null=True)
 	evalue = FloatField(default=None,null=True)
 	expected_domains = FloatField(default=None,null=True)
-	target = Charfield(default=None,null=True)
+	target = CharField(default=None,null=True)
 
 class TrinityDB:
 	
@@ -153,3 +153,17 @@ class TrinityDB:
 					evalue=row['evalue'],
 					expected_domains=row['expected_domains'],
 					target=row['target'])
+				
+	def load_all(self,trinity_infile,uniprot_xml,hmmscan_table,min_length=0):
+		'''
+		Load trinity fasta file and annotations. Uses BLASTp annotations
+		against Uniprot and hmmscan annotations agains PFAM. Blast output
+		must be in xml format (outfmt 5), and hmmscan output must be table
+		format (--tblout option)
+		'''
+		print "Loading from Trinity fasta file"
+		self.load_trinity(trinity_infile,min_length)
+		print "Loading Uniprot BLAST annotations"
+		self.load_uniprot(uniprot_xml)
+		print "Loading PFAM hmmscan annotations"
+		self.load_pfam(hmmscan_table)
