@@ -6,79 +6,26 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from itertools import izip_longest
 import pickle
-from parsers/trinity_parser import parse_trinity
-from parsers/uniprot_blast_parser import tsv_line_gen
-from parsers/parse_hmmscan import byline_scan_generator
+from trinity_parser import parse_trinity
+from uniprot_blast_parser import tsv_line_gen
+from parse_hmmscan import byline_scan_generator
+from Models import *
 	
-db = SqliteDatabase(None,threadlocals=True)
 
-class SqliteModel(Model):
-	'''Base model defining which database to use'''
-	class Meta:
-		database = db
-	
-class Trinity(SqliteModel):
-	'''
-	Primary model containing data for each transcript. Fields are:
-	name: CharField(primary_key=True)
-	seq: BlobField() -- pickled BioPython TrinityIO object
-	prot: BlobField() -- pickled BioPython TrinityIO object
-	dna_length: IntegerField()
-	prot_length: IntegerField()
-	is_canonical: BooleanField()
-	'''
-	name = CharField(primary_key=True)
-	seq = CharField()
-	orf = CharField()
-	prot = CharField()
-	dna_len = IntegerField()
-	orf_len = IntegerField()
-	prot_len = IntegerField()
-	is_canonical = BooleanField()
-	num_var = IntegerField()
-		
-class Uniprot(SqliteModel):
-	'''
-	Model of simple Uniprot annotation. Includes three fields (columns):
-	name: ForeignKeyField
-	uniprot_id: CharField
-	title: 		CharField
-	'''
-	name = ForeignKeyField(Trinity,related_name='uniprot_annotation') # connect to Trinity
-	uniprot_id = CharField(default=None,null=True)
-	title = CharField(default=None,null=True)
-	### Add evalue ###
-	
-class PFAM(SqliteModel):
-	'''
-	Model for PFAM annotation using hmmscan. Six fields:
-	name = ForeignKeyField
-	accession = Charfield
-	description = Charfield
-	evalue = FloatField
-	expected_domains = FloatField
-	target = Charfield
-	'''
-	name = ForeignKeyField(Trinity,related_name='pfam_annotations') # connect to Trinity
-	accession = CharField(default=None,null=True)
-	description = CharField(default=None,null=True)
-	evalue = FloatField(default=None,null=True)
-	expected_domains = FloatField(default=None,null=True)
-	target = CharField(default=None,null=True)
 
-class TrinityDB:
-	
+class TrinityDB:	
 	'''
 	Class for loading a database with output from a Trinity assembly and
 	annotations from Uniprot using Blastp and PFAM using hmmscan.
 	'''
 	
 	def __init__(self,db_name):
-		db.init(db_name)
-		db.connect()
+		self.database = SqliteDatabase(db_name,threadlocals=True)
+		db_proxy.initialize(self.database)
+		self.database.connect()
 		
 	def close(self):
-		db.close()
+		self.database.close()
 	
 	def load_trinity(self,infile,min_length=0):
 		'''
@@ -101,7 +48,7 @@ class TrinityDB:
 		**Note: only the forward frames are searched for protein sequences."
 		'''
 		Trinity.create_table()
-		with db.transaction():
+		with self.database.transaction():
 			Trinity.insert_many(parse_trinity(infile,min_length)).execute()
 			
 	def get_canonicals(self,kind='prot'):
@@ -137,7 +84,7 @@ class TrinityDB:
 	def load_uniprot(self,infile):
 		'''Load top hits from .xml blast of Uniprot database.'''
 		Uniprot.create_table()
-		with db.transaction():
+		with self.database.transaction():
 			fields = ["name","uniprot_id","title"]
 			for row in tsv_line_gen(infile):
 				row = row.strip().split("\t")
@@ -150,7 +97,7 @@ class TrinityDB:
 	def load_pfam(self,infile):
 		'''Load PFAM table from hmmscan table (must use --tblout option).'''
 		PFAM.create_table()
-		with db.transaction():
+		with self.database.transaction():
 			for row in byline_scan_generator(infile):
 				transcript_name = Trinity.get(Trinity.name == str(row['name']))
 				PFAM.create(name=transcript_name,
