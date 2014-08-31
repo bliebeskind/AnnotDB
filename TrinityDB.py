@@ -6,9 +6,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from itertools import izip_longest
 import pickle
-from trinity_parser import parse_trinity
-from uniprot_blast_parser import tsv_line_gen
-from parse_hmmscan import byline_scan_generator
+from parsers/trinity_parser import parse_trinity
+from parsers/uniprot_blast_parser import tsv_line_gen
+from parsers/parse_hmmscan import byline_scan_generator
 	
 db = SqliteDatabase(None,threadlocals=True)
 
