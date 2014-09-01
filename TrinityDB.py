@@ -51,7 +51,7 @@ class TrinityDB:
 		with self.database.transaction():
 			Trinity.insert_many(parse_trinity(infile,min_length)).execute()
 			
-	def get_canonicals(self,kind='prot'):
+	def get_canonicals(self,cutoff=0,kind='prot'):
 		'''Returns an iterator of SeqRecord objects corresponding to the 
 		longest sequences for each comp. Kinds can be "seq" for the whole
 		sequence; "orf" for the longest open reading frame; and "prot" for
@@ -59,26 +59,51 @@ class TrinityDB:
 		assert kind.lower() in ["seq","orf","prot"],\
 		"Kind must be 'seq', 'orf', or 'prot'"
 		kind = kind.lower()
+		count = 0
 		if kind == 'prot':
-			for i in Trinity.select().where(Trinity.is_canonical == True):
-				seq = SeqRecord(Seq(i.prot),id=i.name,description='')
+			selection = (Trinity
+				.select(Trinity.name, Trinity.prot)
+				.where((Trinity.is_canonical == True)
+					& (Trinity.prot_len >= cutoff))
+				.tuples())
+			for name,prot in selection.naive().iterator():
+				seq = SeqRecord(Seq(prot),id=name,description='')
+				count +=1
+				if count % 100 == 0:
+					print str(count)
 				yield seq
 		elif kind == 'orf':
-			for i in Trinity.select().where(Trinity.is_canonical == True):
-				seq = SeqRecord(Seq(i.orf),id=i.name,description='')
+			selection = (Trinity
+				.select(Trinity.name, Trinity.orf)
+				.where((Trinity.is_canonical == True)
+					& (Trinity.orf_len >= cutoff))
+				.tuples())
+			for name,orf in selection.naive().iterator():
+				seq = SeqRecord(Seq(orf),id=name,description='')
+				count +=1
+				if count % 100 == 0:
+					print str(count)
 				yield seq
 		elif kind == 'seq':
-			for i in Trinity.select().where(Trinity.is_canonical == True):
-				sequence = SeqRecord(Seq(i.seq),id=i.name,description='')
+			selection = (Trinity
+				.select(Trinity.name, Trinity.seq)
+				.where((Trinity.is_canonical == True)
+					& (Trinity.dna_len >= cutoff))
+				.tuples())
+			for name,seq in selection.naive().iterator():
+				sequence = SeqRecord(Seq(seq),id=name,description='')
+				count +=1
+				if count % 100 == 0:
+					print str(count)
 				yield sequence
 		else:
 			raise
 
-	def write_canonicals(self,outfile,kind='prot',format='fasta'):
+	def write_canonicals(self,outfile,cutoff=0,kind='prot',format='fasta'):
 		'''Write canonical (longest) transcripts to outfile. Kinds can be 
 		"seq" for the whole sequence; "orf" for the longest open reading 
 		frame; and "prot" for translated ORFs.'''
-		SeqIO.write(self.get_canonicals(kind),outfile,format)
+		SeqIO.write(self.get_canonicals(cutoff,kind),outfile,format)
 		
 
 	def load_uniprot(self,infile):
