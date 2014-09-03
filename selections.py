@@ -1,5 +1,7 @@
 from peewee import *
 from Models import *
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 def uniprot_by_domain(domain):
 	'''
@@ -25,3 +27,29 @@ def uniprot_by_domain(domain):
 	yield ",".join(["Sequence","Uniprot_name"]) + "\n"
 	for row in selection:
 		yield ",".join([row.name,row.title]) + "\n"
+		
+def sequence_by_domain(domain,kind='prot'):
+	'''
+	Get sequences based on domain annotation. Returns an iterator of
+	Biopython SeqRecord objects.
+	
+	Usage:
+	>>> SeqIO.write(sequence_by_domain("V1R"),"V1Rs.fas",'fasta')
+	'''
+	if kind == 'prot':
+		expr = "row.prot"
+	elif kind == 'orf':
+		expr = "row.orf"
+	elif kind == 'seq':
+		expr = "row.seq"
+	else:
+		raise Exception("Kind %s not found" % kind)
+	selection = (Trinity
+				.select(Trinity)
+				.join(PFAM)
+				.where(PFAM.target == domain)
+				.naive()
+				.iterator())
+	for row in selection:
+		outseq = SeqRecord(Seq(eval(expr)),id=row.name,description='')
+		yield outseq
