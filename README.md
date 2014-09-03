@@ -17,10 +17,11 @@ The three models are listed here, along with their associated fields.
   * **name**: Name of the sequence, e.g. "comp29167_c0_seq1"
   * **seq**: Full nucleotide sequence
   * **orf**: Longest open reading frame (only forward frame are checked)
-  * **prot**: Protein associated with longets ORF
+  * **prot**: Protein associated with longest ORF
   * **dna\_len**: Length of full sequence
   * **orf\_len**: Length of longest ORF
   * **prot\_len**: Length of longest translation
+  * **is_canonical**: Boolean, whether this is the longest splice variant
   * **num\_var**: Number of variants associated with this comp
   
 
