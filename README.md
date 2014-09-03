@@ -25,13 +25,13 @@ The three models are listed here, along with their associated fields.
   * **num\_var**: Number of variants associated with this comp
   
 
-* **Uniprot** - Uniprot annotation using Blastp
+* **Uniprot** - Uniprot annotation using Blastp. Input must be XML (outfmt 5)
   * **name**: Name of the sequence, Foreign key from Trinity
   * **uniprot_id**: Uniprot id of the top Blastp hit
   * **title**: Uniprot name of the top Blastp hit
 
   
-* **PFAM** - PFAM annotation using hmmscan. Multiple rows per query.
+* **PFAM** - PFAM annotation using hmmscan. Input must be table format (--tblout)
   * **name**: Name of the sequence, Foreign key from Trinity
   * **accession**: PFAM accession of target
   * **description**: Description of target
