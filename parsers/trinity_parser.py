@@ -128,6 +128,7 @@ def parse_trinity(infile,min_length=0):
 	'''
 	fields = ["name","seq","orf","prot","is_canonical","dna_len",
 		"orf_len","prot_len","num_var"]
+	count = 0
 	for rec,orf,canon,isoforms in find_canonicals(infile,min_length):
 		assert rec.id == orf.id
 		prot = copy(orf)
@@ -135,3 +136,6 @@ def parse_trinity(infile,min_length=0):
 		info = [rec.id, str(rec.seq), str(orf.seq), str(prot.seq), canon, len(rec.seq), 
 			len(orf.seq), len(prot.seq), isoforms]
 		yield dict(zip(fields,info))
+		count +=1
+		if count % 100 == 0:
+			print str(count)
