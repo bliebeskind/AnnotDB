@@ -15,6 +15,7 @@ def hit_gen(infile):
 				yield rec.query, None
 			
 def tsv_line_gen(infile):
+	count = 0
 	for query,top_hit in hit_gen(infile):
 		if top_hit != None:
 			descr = top_hit.strip().split(" ")
@@ -26,6 +27,9 @@ def tsv_line_gen(infile):
 		else:
 			uniprot_id, name = '',''
 		yield "\t".join([query,uniprot_id,name])
+		count +=1
+		if count % 100 == 0:
+			print str(count)
 		
 if __name__ == '__main__':
 	infile = sys.argv[1]

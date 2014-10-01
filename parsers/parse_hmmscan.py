@@ -50,9 +50,13 @@ def byline_scan_generator(hmmscan_table):
 	{query: name, target_name: hmm1, accession: PF0001, evalue: 0}
 	'''
 	fields = ["target","accession","name","evalue","expected_domains","description"]
+	count = 0
 	for line in main_generator(hmmscan_table):
 		values = [line[0],line[1],line[2],float(line[4]),float(line[10]),line[-1]]
 		yield dict(zip(fields,values))
+		count +=1
+		if count % 100 == 0:
+			print str(count)
 
 def matches(hmmscan_table,domain,thresh):
 	'''Generator function. Returns stream of query names that hit <domain>
