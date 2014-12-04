@@ -99,16 +99,20 @@ class TrinityDB:
 
 	def load_uniprot(self,infile):
 		'''Load top hits from .xml blast of Uniprot database.'''
-		Uniprot.create_table()
-		with self.database.transaction():
-			fields = ["name","uniprot_id","title"]
-			for row in tsv_line_gen(infile):
-				row = row.strip().split("\t")
-				data_dict = dict(izip_longest(fields,row))
-				transcript_name = Trinity.get(Trinity.name == str(data_dict['name']))
-				Uniprot.create(name=transcript_name,
-					uniprot_id=data_dict['uniprot_id'],
-					title=data_dict['title'])
+		try:
+			self.con.execute('''
+				CREATE TABLE
+				Uniprot
+				(name TEXT PRIMARY KEY,
+				uniprot_id TEXT,
+				title TEXT,
+				FOREIGN KEY(name) REFERENCES Trinity(name))
+				''')
+		except sql.Error as e: # catch if table already exists
+			return e # Could make this more sophisticated, user input?
+		with self.con:
+			self.con.executemany("INSERT INTO Uniprot VALUES (?,?,?)", \
+				tsv_line_gen(infile))
 				
 	def load_pfam(self,infile):
 		'''Load PFAM table from hmmscan table (must use --tblout option).'''

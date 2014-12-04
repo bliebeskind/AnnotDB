@@ -15,6 +15,8 @@ def hit_gen(infile):
 				yield rec.query, None
 			
 def tsv_line_gen(infile):
+	'''Generator of parsed Blast XML output from a Uniprot search. Yields 
+	tuples of "query", "Uniprot ID", and long Uniprot title.'''
 	count = 0
 	for query,top_hit in hit_gen(infile):
 		if top_hit != None:
@@ -23,10 +25,10 @@ def tsv_line_gen(infile):
 			assert uni[0] == 'sp' or uni[0] == 'tr', \
 			"Unknown database: %s" % uni[0]
 			uniprot_id = uni[1]
-			name = ' '.join(descr[2:])
+			title = ' '.join(descr[2:])
 		else:
-			uniprot_id, name = '',''
-		yield "\t".join([query,uniprot_id,name])
+			uniprot_id, title = '',''
+		yield (query,uniprot_id,title)
 		count +=1
 		if count % 100 == 0:
 			print str(count)
@@ -35,4 +37,4 @@ if __name__ == '__main__':
 	infile = sys.argv[1]
 	print "\t".join(["Query","Uniprot Id", "Title"])
 	for line in tsv_line_gen(infile):
-		print line
+		print '\t'.join(line)
