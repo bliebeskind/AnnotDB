@@ -1,11 +1,12 @@
 #! /usr/bin/env python
+import time
 
-from peewee import *
+import sqlite3 as sql
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from itertools import izip_longest
-import pickle
+#import pickle
 from trinity_parser import parse_trinity
 from uniprot_blast_parser import tsv_line_gen
 from parse_hmmscan import byline_scan_generator
@@ -20,12 +21,11 @@ class TrinityDB:
 	'''
 	
 	def __init__(self,db_name):
-		self.database = SqliteDatabase(db_name,threadlocals=True)
-		db_proxy.initialize(self.database)
-		self.database.connect()
+		self.con = sql.connect(db_name)
 		
 	def close(self):
-		self.database.close()
+		'''Close database'''
+		self.con.close()
 	
 	def load_trinity(self,infile,min_length=0):
 		'''
@@ -47,57 +47,48 @@ class TrinityDB:
 	
 		**Note: only the forward frames are searched for protein sequences."
 		'''
-		Trinity.create_table()
-		with self.database.transaction():
-			Trinity.insert_many(parse_trinity(infile,min_length)).execute()
+		t0 = time.time()
+		try:
+			self.con.execute('''
+				CREATE TABLE
+				Trinity
+				(name TEXT PRIMARY KEY,
+				seq TEXT,
+				orf TEXT,
+				prot TEXT,
+				is_canonical INTEGER,
+				dna_len INTEGER,
+				orf_len INTEGER,
+				prot_len INTEGER,
+				num_var INTEGER)
+				''')
+		except sql.Error as e: # catch if table already exists
+			return e # Could make this more sophisticated, user input?
+		with self.con:
+			self.con.executemany("INSERT INTO Trinity VALUES (?,?,?,?,?,?,?,?,?)", \
+				parse_trinity(infile,min_length))
+		t1 = time.time()
+		print "Time taken: %i" % (t1 - t0)
 			
 	def get_canonicals(self,cutoff=0,kind='prot'):
 		'''Returns an iterator of SeqRecord objects corresponding to the 
 		longest sequences for each comp. Kinds can be "seq" for the whole
 		sequence; "orf" for the longest open reading frame; and "prot" for
 		translated ORFs'''
-		assert kind.lower() in ["seq","orf","prot"],\
-		"Kind must be 'seq', 'orf', or 'prot'"
-		kind = kind.lower()
+		L = ["prot","orf","seq"]
+		try:
+			assert kind in L
+		except AssertionError:
+			raise Exception("Kind must be 'prot','orf', or 'seq': %s" % kind)
+		selection = self.con.execute('''SELECT name, %s FROM Trinity \
+			WHERE Trinity.is_canonical==1 AND Trinity.prot_len >= %s''' % (kind,cutoff))
 		count = 0
-		if kind == 'prot':
-			selection = (Trinity
-				.select(Trinity.name, Trinity.prot)
-				.where((Trinity.is_canonical == True)
-					& (Trinity.prot_len >= cutoff))
-				.tuples())
-			for name,prot in selection.naive().iterator():
-				seq = SeqRecord(Seq(prot),id=name,description='')
-				count +=1
-				if count % 100 == 0:
-					print str(count)
-				yield seq
-		elif kind == 'orf':
-			selection = (Trinity
-				.select(Trinity.name, Trinity.orf)
-				.where((Trinity.is_canonical == True)
-					& (Trinity.orf_len >= cutoff))
-				.tuples())
-			for name,orf in selection.naive().iterator():
-				seq = SeqRecord(Seq(orf),id=name,description='')
-				count +=1
-				if count % 100 == 0:
-					print str(count)
-				yield seq
-		elif kind == 'seq':
-			selection = (Trinity
-				.select(Trinity.name, Trinity.seq)
-				.where((Trinity.is_canonical == True)
-					& (Trinity.dna_len >= cutoff))
-				.tuples())
-			for name,seq in selection.naive().iterator():
-				sequence = SeqRecord(Seq(seq),id=name,description='')
-				count +=1
-				if count % 100 == 0:
-					print str(count)
-				yield sequence
-		else:
-			raise
+		for name,prot in selection:
+			seq = SeqRecord(Seq(prot),id=name,description='')
+			count +=1
+			if count % 100 == 0:
+				print str(count)
+			yield seq
 
 	def write_canonicals(self,outfile,cutoff=0,kind='prot',format='fasta'):
 		'''Write canonical (longest) transcripts to outfile. Kinds can be 

@@ -126,8 +126,6 @@ def parse_trinity(infile,min_length=0):
 	
 	**Note: only the forward frames are searched for protein sequences.
 	'''
-	fields = ["name","seq","orf","prot","is_canonical","dna_len",
-		"orf_len","prot_len","num_var"]
 	count = 0
 	for rec,orf,canon,isoforms in find_canonicals(infile,min_length):
 		assert rec.id == orf.id
@@ -135,7 +133,7 @@ def parse_trinity(infile,min_length=0):
 		prot.seq = str(orf.seq.translate())
 		info = [rec.id, str(rec.seq), str(orf.seq), str(prot.seq), canon, len(rec.seq), 
 			len(orf.seq), len(prot.seq), isoforms]
-		yield dict(zip(fields,info))
+		yield tuple(info)
 		count +=1
 		if count % 100 == 0:
 			print str(count)
