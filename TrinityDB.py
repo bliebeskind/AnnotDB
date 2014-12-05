@@ -32,15 +32,15 @@ class TrinityDB:
 		Load sequences output by a Trinity assembly into table "Trinity"
 		Fields are:
 	
-		name: 		The unique name of the sequence given by Trinity (TEXT)
+		name: 		The unique name of the sequence given by Trinity (TEXT, P. KEY)
 		seq:		TEXT of the full sequence
 		orf:		TEXT of the longest ORF
-		prot: 		String of the translated longest ORF
+		prot: 		TEXT of the translated longest ORF
 		is_canonical:	Boolean - whether this is the longest transcript
-		dna_len:	Length of full sequence
-		orf_len:	Length of longest ORF
-		prot_len:	Length of tranlated longest ORF
-		num_var:	Number of variants associated with this comp
+		dna_len:	Length of full sequence (INTEGER)
+		orf_len:	Length of longest ORF (INTEGER)
+		prot_len:	Length of tranlated longest ORF (INTEGER)
+		num_var:	Number of variants associated with this comp (INTEGER)
 	
 		Specifying a minimum length will skip sequences that don't have a 
 		tranlatable region above the specified number of amino acids.
@@ -71,7 +71,12 @@ class TrinityDB:
 		print "Time taken: %i" % (t1 - t0)	
 
 	def load_uniprot(self,infile):
-		'''Load top hits from .xml blast of Uniprot database.'''
+		'''Load top hits from .xml blast of Uniprot database to table "Uniprot"
+		Fields are:
+		name: 	Trinity name (TEXT, PRIMARY KEY, FOREIGN KEY to Trinity.name)
+		uniprot_id: Unique Uniprot identifier (TEXT)
+		title: 	Uniprot description of Uniprot.uniprot_id (TEXT)
+		'''
 		try:
 			self.con.execute('''
 				CREATE TABLE
@@ -91,12 +96,12 @@ class TrinityDB:
 		'''
 		Load PFAM table from hmmscan table (must use --tblout option).
 		Fields are:
-		"target",
-		"accession",
-		"name",
-		"evalue",
-		"expected_domains",
-		"description"
+		target: 	The PFAM domain hit (TEXT)
+		accession:	PFAM accession (TEXT)
+		name:		Trinity name (TEXT, FOREIGN KEY to Trinity.name)
+		evalue:		(REAL)
+		expected_domains: The expected number of PFAM.target domains (REAL)
+		description:	Description of PFAM.target (TEXT)
 		'''
 		try:
 			self.con.execute('''
