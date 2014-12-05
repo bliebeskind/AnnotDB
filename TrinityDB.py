@@ -21,6 +21,14 @@ class TrinityDB:
 	def close(self):
 		'''Close database'''
 		self.con.close()
+		
+	def view_tables(self):
+		'''Show tables'''
+		tables = self.con.execute('''
+			SELECT NAME FROM sqlite_master WHERE TYPE="table"''').fetchall()
+		print "Found %i tables:" % len(tables)
+		for t in tables:
+			print '  ' + t[0]
 	
 	def load_trinity(self,infile,min_length=0):
 		'''
