@@ -22,7 +22,7 @@ class TrinityDB:
 		'''Close database'''
 		self.con.close()
 		
-	def view_tables(self):
+	def table_names(self):
 		'''Show tables'''
 		tables = self.con.execute('''
 			SELECT NAME FROM sqlite_master WHERE TYPE="table"''').fetchall()
