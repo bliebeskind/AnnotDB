@@ -1,13 +1,13 @@
 AnnotDB
 ===========
 
-Modules for working with protein annotation databases using sqlite and peewee.
+Modules for working with protein annotation databases using sqlite3.
 Also requires BioPython
 
 ###TrinityDB
 
-TrinitDB provides peewee models for a  Trinity assembly and associated 
-annotations. There are functions for loading a database, and simple stuff
+TrinitDB will upload a  Trinity assembly and associated annotations into a
+SQLite database. There are also functions for simple but helpful stuff
 like writing out canonical (longest) transcripts and associated proteins
 using BioPython's SeqIO methods.
 
