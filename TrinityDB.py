@@ -1,18 +1,13 @@
 #! /usr/bin/env python
-import time
 
+import time
 import sqlite3 as sql
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from itertools import izip_longest
-#import pickle
 from trinity_parser import parse_trinity
 from uniprot_blast_parser import tsv_line_gen
-from parse_hmmscan import byline_scan_generator
-from Models import *
-	
-
+from parse_hmmscan import byline_scan_generator	
 
 class TrinityDB:	
 	'''
