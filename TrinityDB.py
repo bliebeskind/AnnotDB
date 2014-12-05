@@ -29,6 +29,18 @@ class TrinityDB:
 		print "Found %i tables:" % len(tables)
 		for t in tables:
 			print '  ' + t[0]
+			
+	def table_info(self):
+		print "\t".join(["Table","Columns","Rows"])
+		tables = self.con.execute('''
+			SELECT NAME FROM sqlite_master WHERE TYPE="table"''').fetchall()
+		table_list = [t[0] for t in tables]
+		for table in table_list:
+			num_cols = len(self.con.execute('''
+				PRAGMA table_info(%s)''' % table).fetchall())
+			num_rows = self.con.execute('''
+				SELECT Count() FROM %s''' % table).fetchone()[0]
+			print "\t".join([table,str(num_cols),str(num_rows)])
 	
 	def load_trinity(self,infile,min_length=0):
 		'''
