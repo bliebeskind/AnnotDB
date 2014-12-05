@@ -29,12 +29,12 @@ class TrinityDB:
 	
 	def load_trinity(self,infile,min_length=0):
 		'''
-		Load sequences output by a Trinity assembly into table: "Trinity
-		Dictionary fields are:
+		Load sequences output by a Trinity assembly into table "Trinity"
+		Fields are:
 	
-		name: 		The unique name of the sequence given by Trinity (str)
-		seq:		String of the full sequence
-		orf:		String of the longest ORF
+		name: 		The unique name of the sequence given by Trinity (TEXT)
+		seq:		TEXT of the full sequence
+		orf:		TEXT of the longest ORF
 		prot: 		String of the translated longest ORF
 		is_canonical:	Boolean - whether this is the longest transcript
 		dna_len:	Length of full sequence
@@ -68,8 +68,68 @@ class TrinityDB:
 			self.con.executemany("INSERT INTO Trinity VALUES (?,?,?,?,?,?,?,?,?)", \
 				parse_trinity(infile,min_length))
 		t1 = time.time()
-		print "Time taken: %i" % (t1 - t0)
-			
+		print "Time taken: %i" % (t1 - t0)	
+
+	def load_uniprot(self,infile):
+		'''Load top hits from .xml blast of Uniprot database.'''
+		try:
+			self.con.execute('''
+				CREATE TABLE
+				Uniprot
+				(name TEXT PRIMARY KEY,
+				uniprot_id TEXT,
+				title TEXT,
+				FOREIGN KEY(name) REFERENCES Trinity(name))
+				''')
+		except sql.Error as e: # catch if table already exists
+			return e # Could make this more sophisticated, user input?
+		with self.con:
+			self.con.executemany("INSERT INTO Uniprot VALUES (?,?,?)", \
+				tsv_line_gen(infile))
+				
+	def load_pfam(self,infile):
+		'''
+		Load PFAM table from hmmscan table (must use --tblout option).
+		Fields are:
+		"target",
+		"accession",
+		"name",
+		"evalue",
+		"expected_domains",
+		"description"
+		'''
+		try:
+			self.con.execute('''
+				CREATE TABLE
+				PFAM
+				(target TEXT,
+				accession TEXT,
+				name TEXT,
+				evalue REAL,
+				expected_domains REAL,
+				description TEXT,
+				FOREIGN KEY(name) REFERENCES Trinity(name))
+				''')
+		except sql.Error as e: # catch if table already exists
+			return e # Could make this more sophisticated, user input?
+		with self.con:
+			self.con.executemany("INSERT INTO PFAM VALUES (?,?,?,?,?,?)", \
+				byline_scan_generator(infile))
+				
+	def load_all(self,trinity_infile,uniprot_xml,hmmscan_table,min_length=0):
+		'''
+		Load trinity fasta file and annotations. Uses BLASTp annotations
+		against Uniprot and hmmscan annotations agains PFAM. Blast output
+		must be in xml format (outfmt 5), and hmmscan output must be table
+		format (--tblout option)
+		'''
+		print "Loading from Trinity fasta file"
+		self.load_trinity(trinity_infile,min_length)
+		print "Loading Uniprot BLAST annotations"
+		self.load_uniprot(uniprot_xml)
+		print "Loading PFAM hmmscan annotations"
+		self.load_pfam(hmmscan_table)
+		
 	def get_canonicals(self,cutoff=0,kind='prot'):
 		'''Returns an iterator of SeqRecord objects corresponding to the 
 		longest sequences for each comp. Kinds can be "seq" for the whole
@@ -95,47 +155,3 @@ class TrinityDB:
 		"seq" for the whole sequence; "orf" for the longest open reading 
 		frame; and "prot" for translated ORFs.'''
 		SeqIO.write(self.get_canonicals(cutoff,kind),outfile,format)
-		
-
-	def load_uniprot(self,infile):
-		'''Load top hits from .xml blast of Uniprot database.'''
-		try:
-			self.con.execute('''
-				CREATE TABLE
-				Uniprot
-				(name TEXT PRIMARY KEY,
-				uniprot_id TEXT,
-				title TEXT,
-				FOREIGN KEY(name) REFERENCES Trinity(name))
-				''')
-		except sql.Error as e: # catch if table already exists
-			return e # Could make this more sophisticated, user input?
-		with self.con:
-			self.con.executemany("INSERT INTO Uniprot VALUES (?,?,?)", \
-				tsv_line_gen(infile))
-				
-	def load_pfam(self,infile):
-		'''Load PFAM table from hmmscan table (must use --tblout option).'''
-		PFAM.create_table()
-		with self.database.transaction():
-			for row in byline_scan_generator(infile):
-				transcript_name = Trinity.get(Trinity.name == str(row['name']))
-				PFAM.create(name=transcript_name,
-					description=row['description'],
-					evalue=row['evalue'],
-					expected_domains=row['expected_domains'],
-					target=row['target'])
-				
-	def load_all(self,trinity_infile,uniprot_xml,hmmscan_table,min_length=0):
-		'''
-		Load trinity fasta file and annotations. Uses BLASTp annotations
-		against Uniprot and hmmscan annotations agains PFAM. Blast output
-		must be in xml format (outfmt 5), and hmmscan output must be table
-		format (--tblout option)
-		'''
-		print "Loading from Trinity fasta file"
-		self.load_trinity(trinity_infile,min_length)
-		print "Loading Uniprot BLAST annotations"
-		self.load_uniprot(uniprot_xml)
-		print "Loading PFAM hmmscan annotations"
-		self.load_pfam(hmmscan_table)

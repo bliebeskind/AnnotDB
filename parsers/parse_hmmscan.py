@@ -43,6 +43,19 @@ def scan_generator(hmmscan_table):
 	
 def byline_scan_generator(hmmscan_table):
 	'''
+	Yield tuples corresponding to one query at a time.
+	Fields are:
+	("target","accession","name","evalue","expected_domains","description")
+	'''
+	count = 0
+	for line in main_generator(hmmscan_table):
+		yield line[0],line[1],line[2],float(line[4]),float(line[10]),line[-1]
+		count +=1
+		if count % 100 == 0:
+			print str(count)
+			
+def dict_scan_generator(hmmscan_table):
+	'''
 	Yield dictionaries corresponding to one query at a time. Format is
 	the query as key mapped to a list of dictionaries corresponding to the 
 	field values:
