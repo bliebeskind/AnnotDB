@@ -31,6 +31,7 @@ class TrinityDB:
 			print '  ' + t[0]
 			
 	def table_info(self):
+		'''Show tables and number of rows and columns in each table.'''
 		print "\t".join(["Table","Columns","Rows"])
 		tables = self.con.execute('''
 			SELECT NAME FROM sqlite_master WHERE TYPE="table"''').fetchall()
@@ -175,3 +176,15 @@ class TrinityDB:
 		"seq" for the whole sequence; "orf" for the longest open reading 
 		frame; and "prot" for translated ORFs.'''
 		SeqIO.write(self.get_canonicals(cutoff,kind),outfile,format)
+		
+	def uniprot_descriptions_from_domain(self,domain,delimiter='\t'):
+		'''
+		Returns a generator of sequence names and Uniprot descriptions
+		for all rows that match a PFAM domain.
+		'''
+		search = self.con.execute('''
+			SELECT t.name,u.title
+			FROM Trinity t JOIN Uniprot u ON t.name=u.name
+			WHERE u.title LIKE ?''', ('%'+domain+'%',))
+		return (delimiter.join([row[0],row[1]]) for row in search.fetchall())
+		
