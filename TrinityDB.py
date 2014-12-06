@@ -151,16 +151,19 @@ class TrinityDB:
 		print "Loading PFAM hmmscan annotations"
 		self.load_pfam(hmmscan_table)
 		
-	def get_canonicals(self,cutoff=0,kind='prot'):
-		'''Returns an iterator of SeqRecord objects corresponding to the 
-		longest sequences for each comp. Kinds can be "seq" for the whole
-		sequence; "orf" for the longest open reading frame; and "prot" for
-		translated ORFs'''
+	def _assert_kind(self,kind):
 		L = ["prot","orf","seq"]
 		try:
 			assert kind in L
 		except AssertionError:
 			raise Exception("Kind must be 'prot','orf', or 'seq': %s" % kind)
+		
+	def get_canonicals(self,cutoff=0,kind='prot'):
+		'''Returns an iterator of SeqRecord objects corresponding to the 
+		longest sequences for each comp. Kinds can be "seq" for the whole
+		sequence; "orf" for the longest open reading frame; and "prot" for
+		translated ORFs'''
+		self._assert_kind(kind)
 		selection = self.con.execute('''SELECT name, %s FROM Trinity \
 			WHERE Trinity.is_canonical==1 AND Trinity.prot_len >= %s''' % (kind,cutoff))
 		count = 0
@@ -187,4 +190,8 @@ class TrinityDB:
 			FROM Trinity t JOIN Uniprot u ON t.name=u.name
 			WHERE u.title LIKE ?''', ('%'+domain+'%',))
 		return (delimiter.join([row[0],row[1]]) for row in search.fetchall())
+	
+#	def to_fast_from_domain(self,domain,outfile,seq_type="protein"):
+#		self._assert_kind(seq_type)
+		
 		
