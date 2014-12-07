@@ -158,14 +158,14 @@ class TrinityDB:
 		except AssertionError:
 			raise Exception("Kind must be 'prot','orf', or 'seq': %s" % kind)
 		
-	def get_canonicals(self,cutoff=0,kind='prot'):
+	def get_canonicals(self,cutoff=0,seq_type='prot'):
 		'''Returns an iterator of SeqRecord objects corresponding to the 
 		longest sequences for each comp. Kinds can be "seq" for the whole
 		sequence; "orf" for the longest open reading frame; and "prot" for
 		translated ORFs'''
-		self._assert_kind(kind)
+		self._assert_kind(seq_type)
 		selection = self.con.execute('''SELECT name, %s FROM Trinity \
-			WHERE Trinity.is_canonical==1 AND Trinity.prot_len >= %s''' % (kind,cutoff))
+			WHERE Trinity.is_canonical==1 AND Trinity.prot_len >= %s''' % (seq_type,cutoff))
 		count = 0
 		for name,prot in selection:
 			seq = SeqRecord(Seq(prot),id=name,description='')
@@ -174,11 +174,11 @@ class TrinityDB:
 				print str(count)
 			yield seq
 
-	def write_canonicals(self,outfile,cutoff=0,kind='prot',format='fasta'):
+	def write_canonicals(self,outfile,cutoff=0,seq_type='prot',format='fasta'):
 		'''Write canonical (longest) transcripts to outfile. Kinds can be 
 		"seq" for the whole sequence; "orf" for the longest open reading 
 		frame; and "prot" for translated ORFs.'''
-		SeqIO.write(self.get_canonicals(cutoff,kind),outfile,format)
+		SeqIO.write(self.get_canonicals(cutoff,seq_type),outfile,format)
 		
 	def uniprot_descriptions_from_domain(self,domain,delimiter='\t'):
 		'''
@@ -187,11 +187,15 @@ class TrinityDB:
 		'''
 		search = self.con.execute('''
 			SELECT t.name,u.title
-			FROM Trinity t JOIN Uniprot u ON t.name=u.name
-			WHERE u.title LIKE ?''', ('%'+domain+'%',))
+			FROM Trinity t JOIN PFAM p ON t.name=p.name 
+			JOIN Uniprot u ON t.name=u.name
+			WHERE p.target=?''', (domain,))
 		return (delimiter.join([row[0],row[1]]) for row in search.fetchall())
 	
-#	def to_fast_from_domain(self,domain,outfile,seq_type="protein"):
+#	def to_fasta_from_domain(self,domain,outfile,seq_type="protein"):
 #		self._assert_kind(seq_type)
+#		search = self.con.execute('''
+#			SELECT t.name,t.prot
+#			FROM TRINITY t 
 		
 		
