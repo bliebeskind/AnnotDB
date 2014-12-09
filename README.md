@@ -46,13 +46,13 @@ There are three tables listed here along with their associated fields.
 import TrinityDB
 myTinyDb = TrinityDB.TrinityDB("myDb.db") # initialize database
 myTinyDb.load_all("MyTrinity.fas","MyBlast.xml","MyHmmscan.txt") # load all annotations
-  Loading from Trinity fasta file
-  Loading Uniprot BLAST annotations
-  Loading PFAM hmmscan annotations
+#  Loading from Trinity fasta file
+#  Loading Uniprot BLAST annotations
+#  Loading PFAM hmmscan annotations
 myDB.table_info()
-  Table	Columns	Rows
-  Trinity	9	11
-  Uniprot	4	10
-  PFAM	6	8
+#  Table	Columns	Rows
+#  Trinity	9	11
+#  Uniprot	4	10
+#  PFAM	6	8
 ```
 
