@@ -50,9 +50,9 @@ myTinyDb.load_all("MyTrinity.fas","MyBlast.xml","MyHmmscan.txt") # load all anno
 #  Loading Uniprot BLAST annotations
 #  Loading PFAM hmmscan annotations
 myDB.table_info()
-#  Table	Columns	Rows
+#  Table Columns Rows
 #  Trinity	9	11
 #  Uniprot	4	10
-#  PFAM	6	8
+#  PFAM		6	8
 ```
 
