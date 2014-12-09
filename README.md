@@ -49,10 +49,20 @@ myTinyDb.load_all("MyTrinity.fas","MyBlast.xml","MyHmmscan.txt") # load all anno
 #  Loading from Trinity fasta file
 #  Loading Uniprot BLAST annotations
 #  Loading PFAM hmmscan annotations
-myDB.table_info()
+myTinyDB.table_info()
 #  Table Columns Rows
 #  Trinity	9	11
 #  Uniprot	4	10
 #  PFAM		6	8
+```
+
+## Write out longest transcripts for each gene ##
+
+```python
+## Defaults: length cutoff:0 - sequence type:'prot' - format: fasta
+myTinyDB.write_canonicals("My_canonical_prots.fas")
+
+## Write ORFs to a nexus file
+myTinyDB.write_canonicals("My_100bp_ORFs.nex",seq_type='orf',format='nexus')
 ```
 
