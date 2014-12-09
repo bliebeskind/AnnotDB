@@ -10,15 +10,15 @@ def hit_gen(infile):
 		records = NCBIXML.parse(f)
 		for rec in records:
 			try:
-				yield rec.query, rec.alignments[0].title
+				yield rec.query, rec.alignments[0].title, rec.descriptions[0].e
 			except IndexError: # no hits below evalue threshold
-				yield rec.query, None
+				yield rec.query, None, None
 			
 def tsv_line_gen(infile):
 	'''Generator of parsed Blast XML output from a Uniprot search. Yields 
 	tuples of "query", "Uniprot ID", and long Uniprot title.'''
 	count = 0
-	for query,top_hit in hit_gen(infile):
+	for query,top_hit,evalue in hit_gen(infile):
 		if top_hit != None:
 			descr = top_hit.strip().split(" ")
 			uni = descr[1].split("|")
@@ -28,7 +28,7 @@ def tsv_line_gen(infile):
 			title = ' '.join(descr[2:])
 		else:
 			uniprot_id, title = '',''
-		yield (query,uniprot_id,title)
+		yield (query,uniprot_id,title,evalue)
 		count +=1
 		if count % 100 == 0:
 			print str(count)

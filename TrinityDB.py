@@ -100,12 +100,13 @@ class TrinityDB:
 				(name TEXT PRIMARY KEY,
 				uniprot_id TEXT,
 				title TEXT,
+				evalue REAL,
 				FOREIGN KEY(name) REFERENCES Trinity(name))
 				''')
 		except sql.Error as e: # catch if table already exists
 			return e # Could make this more sophisticated, user input?
 		with self.con:
-			self.con.executemany("INSERT INTO Uniprot VALUES (?,?,?)", \
+			self.con.executemany("INSERT INTO Uniprot VALUES (?,?,?,?)", \
 				tsv_line_gen(infile))
 				
 	def load_pfam(self,infile):
