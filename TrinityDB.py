@@ -193,16 +193,16 @@ class TrinityDB:
 			WHERE p.target=?''', (domain,))
 		return (delimiter.join([row[0],row[1]]) for row in search.fetchall())
 	
-	def to_fasta_from_domain(self,domain,outfile,seq_type="prot"):
+	def to_fasta_from_domain(self,domain,outfile,seq_type='prot'):
 		'''
 		Search for all sequences that match a PFAM domain and write them to
 		a fasta file. seq_type must be "prot" "orf" or "seq"
 		'''
 		self._assert_kind(seq_type)
-		search = self.con.execute('''
-			SELECT t.name,t.prot
-			FROM TRINITY t JOIN PFAM p on t.name=p.name
-			WHERE p.target=?''', (domain,))
+		c = self.con.cursor()
+		search = c.execute('''
+			SELECT t.name,{} FROM TRINITY t JOIN PFAM p ON t.name=p.name 
+			WHERE p.target=?'''.format("t."+seq_type), (domain,))
 		seq_gen = (SeqRecord(Seq(j),id=i,description='') for i,j in search)
 		SeqIO.write(seq_gen,outfile,'fasta')
 		
