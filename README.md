@@ -70,8 +70,17 @@ myTinyDB.write_canonicals("My_100bp_ORFs.nex",seq_type='orf',format='nexus')
 
 ```python
 with open("myDescriptions.txt",'a') as f:
-	search_generator = myTinydB.uniprot_descriptions_from_domain("SomeDomain")
+	search_generator = myTinyDB.uniprot_descriptions_from_domain("SomeDomain")
 	for line in search_generator:
 		f.write(line)
 ```
 
+## Write out all sequences matching a PFAM domain ##
+
+```python
+## Defaults: sequence type: Protein
+myTinyDB.to_fasta_from_domain("SomeDomain","myFasta.fas")
+
+## Write ORFs
+myTinyDB.to_fasta_from_domain("SomeOtherDomain","myORFFasta.fas",seq_type='orf')
+```
