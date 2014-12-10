@@ -66,3 +66,12 @@ myTinyDB.write_canonicals("My_canonical_prots.fas")
 myTinyDB.write_canonicals("My_100bp_ORFs.nex",seq_type='orf',format='nexus')
 ```
 
+## Write out Uniprot descriptions of all sequences matching a PFAM domain ##
+
+```python
+with open("myDescriptions.txt",'a') as f:
+	search_generator = myTinydB.uniprot_descriptions_from_domain("SomeDomain")
+	for line in search_generator:
+		f.write(line)
+```
+
