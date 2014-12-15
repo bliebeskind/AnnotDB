@@ -206,4 +206,16 @@ class TrinityDB:
 		seq_gen = (SeqRecord(Seq(j),id=i,description='') for i,j in search)
 		SeqIO.write(seq_gen,outfile,'fasta')
 		
-		
+	def to_fasta_from_blast(self,string,outfile,seq_type='prot',evalue=10):
+		'''
+		Search for sequences with <string> in the Blast hit and write to
+		fasta file.
+		'''
+		self._assert_kind(seq_type)
+		search = self.con.execute('''
+			SELECT t.name, {}
+			FROM TRINITY t JOIN Uniprot u ON t.name=u.name
+			WHERE u.title LIKE ?
+			AND u.evalue < ?'''.format("t."+seq_type),('%'+string+'%',evalue))
+		seq_gen = (SeqRecord(Seq(j),id=i,description='') for i,j in search)
+		SeqIO.write(seq_gen,outfile,'fasta')
