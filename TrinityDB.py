@@ -201,9 +201,11 @@ class TrinityDB:
 		self._assert_kind(seq_type)
 		c = self.con.cursor()
 		search = c.execute('''
-			SELECT t.name,{} FROM TRINITY t JOIN PFAM p ON t.name=p.name 
+			SELECT t.name,{},u.title 
+			FROM TRINITY t JOIN PFAM p ON t.name=p.name
+			JOIN Uniprot u ON t.name=u.name
 			WHERE p.target=?'''.format("t."+seq_type), (domain,))
-		seq_gen = (SeqRecord(Seq(j),id=i,description='') for i,j in search)
+		seq_gen = (SeqRecord(Seq(j),id=i,description=k) for i,j,k in search)
 		SeqIO.write(seq_gen,outfile,'fasta')
 		
 	def to_fasta_from_blast(self,string,outfile,seq_type='prot',evalue=10):
@@ -213,9 +215,9 @@ class TrinityDB:
 		'''
 		self._assert_kind(seq_type)
 		search = self.con.execute('''
-			SELECT t.name, {}
+			SELECT t.name, {},u.title
 			FROM TRINITY t JOIN Uniprot u ON t.name=u.name
 			WHERE u.title LIKE ?
 			AND u.evalue < ?'''.format("t."+seq_type),('%'+string+'%',evalue))
-		seq_gen = (SeqRecord(Seq(j),id=i,description='') for i,j in search)
+		seq_gen = (SeqRecord(Seq(j),id=i,description=k) for i,j,k in search)
 		SeqIO.write(seq_gen,outfile,'fasta')
