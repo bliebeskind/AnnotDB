@@ -78,9 +78,20 @@ with open("myDescriptions.txt",'a') as f:
 ## Write out all sequences matching a PFAM domain ##
 
 ```python
-## Defaults: sequence type: Protein
+## Defaults: sequence type: Protein - evalue: 10
 myTinyDB.to_fasta_from_domain("SomeDomain","myFasta.fas")
 
 ## Write ORFs
 myTinyDB.to_fasta_from_domain("SomeOtherDomain","myORFFasta.fas",seq_type='orf')
+
+## Only write hit with e-value equal or better than .01
+myTinyDB.to_fasta_from_domain("SomeDomain","myFasta.fas",evalue=.01)
+```
+
+## Write out sequences with a key word in the blast annotation
+
+```python
+## Defaults: sequence type: Protein - evalue: 10
+## Will write all proteins with "channel" in the top blast hit
+myTinyDB.to_fasta_from_blast("channel","MyBlastFasta.fas")
 ```
