@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import time
+import time, csv
 import sqlite3 as sql
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -151,6 +151,54 @@ class TrinityDB:
 		self.load_uniprot(uniprot_xml)
 		print "Loading PFAM hmmscan annotations"
 		self.load_pfam(hmmscan_table)
+		
+	def load_user_table(self,csv_file,columns,table_name,dialect='excel'):
+		'''
+		Load a user defined table from a csv file. 
+		
+		Parameters:
+		csv_file: Flat text infile. Header must match column dict.
+		columns: Dictionary mapping column names to type. Must have column
+			"name" which matches "name" column from Trinity table.
+			Example: {'name':'text','test1':'integer','test2':'integer'}
+		table: The name of your table. Must be one word.
+		dialect: Optional parameter for reading infile. See python's csv.reader
+			for documentation.
+			
+		**Note: Does not read xlsx. Please export your Excel file to csv.
+		'''
+		with open(csv_file,'rb') as f:
+			reader = csv.reader(f,dialect)
+			# Create sql columns and values to be substituted:
+			# cols: ({},{}...FOREIGN KEY(name) REFERENCES Trinity(name)))
+			# vals: (?,?,?...)
+			header_line = reader.next()
+			assert len(header_line) == len(columns), \
+			"Number of columns don't match table"
+			temp = "(" + ",".join(("{}" for i in header_line))
+			cols_string = temp + ",FOREIGN KEY(name) REFERENCES Trinity(name))"
+			vals_string = "(" + ",".join(("?" for i in header_line)) + ")"
+			
+			# Create substitution: (column1 integer, column2 text...)
+			func = lambda x: ' '.join((x,columns[x]))
+			try: # create column names and types from infile and column dict
+				sub_tuple = tuple(map(func,header_line))
+			except KeyError, e: # header line and column dict don't match
+				raise Exception("Bad column from infile: %s" % e)
+			
+			# Create table
+			try:
+				sql_string = "CREATE TABLE {} {}".format(table_name,cols_string)
+				self.con.execute(sql_string.format(*sub_tuple))
+			except sql.Error as e: # catch if table already exists
+				return e # Could make this more sophisticated, user input?
+			
+			# Populate table
+			csv_gen = (row for row in reader)
+			with self.con:
+				self.con.executemany('''
+					INSERT INTO {} VALUES {}
+					'''.format(table_name,vals_string), csv_gen)
 		
 	def _assert_kind(self,kind):
 		L = ["prot","orf","seq"]
