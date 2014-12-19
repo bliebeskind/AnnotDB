@@ -1,7 +1,24 @@
 AnnotDB
 ===========
 
-Modules for working with protein annotation databases using sqlite3.
+This module allows you to upload transcriptomes and attendent annotations
+into a sqlite3 database. If you find yourself making transcriptomes frequently
+and would like to keep them organized, then this module might help. It also 
+allows you to share your transcriptome with GUI-only users without having to 
+set up a blast server. Simply load up your transcriptome and annotations, and 
+send it to them. They can then use one of the easy and free SQLite browers to
+search for genes of interest.
+
+It has built in support for annotations from BLAST and HMMER's hmmscan program,
+but assumes that these will be run against Uniprot and PFAM, respectively. 
+There is also support for user-defined annotations,which must be put in a csv 
+file. 
+
+There are a few basic functions to help you search the database once you've
+loaded it, and two SQL scripts which GUI users can use to search using, for
+instance, [SQLiteBrowser] (http://sqlitebrowser.org/).
+
+AnnotDB currently only has support for Trinity transcriptomes.
 Requires BioPython.
 
 ## TrinityDB ##
@@ -11,9 +28,10 @@ SQLite database. There are also functions for simple but helpful stuff
 like writing out canonical (longest) transcripts and associated proteins
 using BioPython's SeqIO methods.
 
-There are three tables listed here along with their associated fields.
+TrinityDB divides the sequences and annotations into three tables. These are
+listed here along with their associated fields.
 
-* **Trinity** - Main model of sequences assembled by Trinity
+* **Trinity** - Main table of sequences assembled by Trinity
   * **name**: Name of the sequence, e.g. "comp29167_c0_seq1"
   * **seq**: Full nucleotide sequence
   * **orf**: Longest open reading frame (only forward frame are checked)
