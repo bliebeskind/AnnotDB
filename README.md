@@ -94,10 +94,12 @@ from the original Trinity outfile.
 #
 cols = {'name':'text', 'treatment1':'integer'...}
 #
-myTinyDB.load_user_table("myTable.csv",cols,"userTable",dialect='excel')
+### Default dialect is "excel" meaning excel-style CSV, not xlsx.
+### The function uses pythons csv module, so for more about dialect
+### objects, see that documentation
 #
-### You can now retrieve values from this or any other table based on values
-### in any of those tables.
+myTinyDB.load_user_table("myTable.csv",cols,"userTable",dialect='excel')
+
 ```
 
 ## Write out longest transcripts for each gene ##
