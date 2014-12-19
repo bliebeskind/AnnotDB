@@ -92,14 +92,15 @@ from the original Trinity outfile.
 ### User must also provide a dictionary mapping
 ### the column names to their intended SQL types.
 #
-cols = {'name':'text', 'treatment1':'integer'...}
+cols = {'name':'text', 'treatment1':'integer', 'treatment2':'integer'}
 #
 ### Default dialect is "excel" meaning excel-style CSV, not xlsx.
 ### The function uses pythons csv module, so for more about dialect
 ### objects, see that documentation
 #
 myTinyDB.load_user_table("myTable.csv",cols,"userTable",dialect='excel')
-
+#
+### You now have a table called "userTable" that you can search against.
 ```
 
 ## Write out longest transcripts for each gene ##
