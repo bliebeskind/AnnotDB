@@ -2,7 +2,7 @@ AnnotDB
 ===========
 
 This module allows you to upload transcriptomes and attendent annotations
-into a sqlite3 database. If you find yourself making transcriptomes frequently
+into a SQLite database. If you find yourself making transcriptomes frequently
 and would like to keep them organized, then this module might help. It also 
 allows you to share your transcriptome with GUI-only users without having to 
 set up a blast server. Simply load up your transcriptome and annotations, and 
@@ -11,7 +11,7 @@ search for genes of interest.
 
 It has built in support for annotations from BLAST and HMMER's hmmscan program,
 but assumes that these will be run against Uniprot and PFAM, respectively. 
-There is also support for user-defined annotations,which must be put in a csv 
+There is also support for user-defined annotations, which must be put in a csv 
 file. 
 
 There are a few basic functions to help you search the database once you've
@@ -72,6 +72,32 @@ myTinyDB.table_info()
 #  Trinity	9	11
 #  Uniprot	4	10
 #  PFAM		6	8
+```
+
+## Load a user-defined table ##
+This is intended to be flexible. Your table could easily be transcript counts
+from various treatments or any other set of values you can put in a table.
+The first column should always be called "name" and have the transcript names
+from the original Trinity outfile.
+
+```python
+### Table should be something like the following
+#
+### name, 			 treatment1, 	treatment2
+### comp297_c0_seq1	 2,				39
+### comp491_c0_seq1	 6,				93
+#
+### The table must be in a flat text file, not Excel
+#
+### User must also provide a dictionary mapping
+### the column names to their intended SQL types.
+#
+cols = {'name':'text', 'treatment1':'integer'...}
+#
+myTinyDB.load_user_table("myTable.csv",cols,"userTable",dialect='excel')
+#
+### You can now retrieve values from this or any other table based on values
+### in any of those tables.
 ```
 
 ## Write out longest transcripts for each gene ##
