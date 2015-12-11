@@ -27,7 +27,7 @@ def tsv_line_gen(infile):
 			uniprot_id = uni[1]
 			title = ' '.join(descr[2:])
 		else:
-			uniprot_id, title = '',''
+			continue
 		yield (query,uniprot_id,title,evalue)
 		count +=1
 		if count % 100 == 0:
