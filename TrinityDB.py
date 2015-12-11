@@ -22,6 +22,12 @@ class TrinityDB:
 		'''Close database'''
 		self.con.close()
 		
+	def drop(self,table):
+		'''Drop a table from the database. PERMANENTLY!'''
+		cur = self.con.cursor()
+		cur.execute('drop table %s' % table)
+		self.con.commit()
+		
 	def table_names(self):
 		'''Show tables'''
 		tables = self.con.execute('''
