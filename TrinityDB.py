@@ -235,6 +235,36 @@ class TrinityDB:
 		frame; and "prot" for translated ORFs.'''
 		SeqIO.write(self.get_canonicals(cutoff,seq_type),outfile,format)
 		
+	def _get_annotated_seqs(self,outfile,annotTable='uniprot',annotCol='title',cutoff=0,seq_type='prot',delim=' '):
+		'''Returns an iterator of (Trinity.name, Trinity.<seq_type>, <annotTable.annotCol>)
+		Annotation table must have .name column.'''
+		self._assert_kind(seq_type)
+		selection = self.con.execute('''
+			SELECT t.name,{0},{1} 
+			FROM Trinity t JOIN {2} on t.name={3}
+			WHERE t.is_canonical==1 
+			AND t.prot_len >= ?'''\
+			.format("t."+seq_type,".".join([annotTable,annotCol]),annotTable,annotTable+".name",),(cutoff,))
+		count = 0
+		for name,seq,annot in selection:
+			seqrec = SeqRecord(Seq(seq),id=delim.join([name,annot]),description='')
+			count +=1
+			if count % 100 == 0:
+				print str(count)
+			yield seqrec
+			
+	def write_annotated_fasta(self,outfile,annotTable='uniprot',annotCol='title',cutoff=0,seq_type='prot',delim=' '):
+		'''Write a fasta file with annotations from the database on the description line.
+		
+		outfile: 	File to write to
+		annotTable:	Database table to get annotations from
+		annotCol:	Column in annotTable to get annotations from
+		cutoff:		Sequence length cutoff, discard sequences below
+		seq_type:	{'prot','seq','orf'}
+		delim:		Delimiter to put between Trinity name and annotations
+		'''
+		SeqIO.write(self._get_annotated_seqs(outfile,annotTable,annotCol,cutoff,seq_type,delim),outfile,'fasta')
+		
 	def uniprot_descriptions_from_domain(self,domain,delimiter='\t'):
 		'''
 		Returns a generator of sequence names and Uniprot descriptions
